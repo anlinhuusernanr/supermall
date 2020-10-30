@@ -5,13 +5,19 @@
         <slot slot="center">购物车</slot>
       </nav-bar>
     </div>
-    <scroll class="content">
+    <scroll class="content"
+     ref="scroll" 
+     :probe-type="3"
+     @scroll="contetnScroll"
+     :pull-up-load="true"
+     @loadMore="loadMore">
       <home-swiper :banners="banners"></home-swiper>
       <home-recommend-view :recommends="recommends"></home-recommend-view>
       <feature-view></feature-view>
       <tab-contorl :titles="['流行','最新','最热']" class="tab-contorl" @tabIndex="getIndex"></tab-contorl>
       <goods-list :goods="showGoods"></goods-list>
     </scroll>
+    <back-top @click.native="backClick" v-show="isBackShow"></back-top>
   </div>
 </template>
 
@@ -22,6 +28,7 @@
   import FeatureView from "./childCpms/FeatureView"
   import GoodsList from "components/content/goods/GoodsList"
   import Scroll from "components/common/scroll/Scroll"
+  import BackTop from "components/content/backTop/BackTop"
 
   import TabContorl from "components/content/tabControl/TabContorl"
 
@@ -38,7 +45,8 @@
           "new" : {page: 0,list: []},
           "sell" : {page: 0,list: []},
         },
-        currentType: 'pop'
+        currentType: 'pop',
+        isBackShow: false
       }
     },
     created() {
@@ -56,7 +64,9 @@
       FeatureView,
       TabContorl,
       GoodsList,
-      Scroll
+      Scroll,
+      BackTop,
+      
     },
     computed:{
       showGoods() {
@@ -79,7 +89,18 @@
           break
         }
       },
-
+      backClick() {
+        this.$refs.scroll.scrollTo(0,0)
+      },
+      contetnScroll(position) {
+        this.isBackShow = (-position.y) > 1000
+      },
+      loadMore() {
+        this.getHomeGoods(this.currentType)
+        //console.log("加载了")
+       
+        this.$refs.scroll.scroll.refresh()
+      },
       /*
       *网络请求相关
       */
@@ -92,10 +113,12 @@
      getHomeGoods(type) {
        const page = this.Goods[type].page + 1
        getHomeGoods(type,page).then(res => {   
-         console.log(res)
+        // console.log(res)
         //this.Goods[type].page = res.data.page
         this.Goods[type].list.push(...res.data.list) 
         this.Goods[type].page += 1
+
+        this.$refs.scroll.finishPullUp()
        })
      }
     }
@@ -105,7 +128,7 @@
 <style scoped>
   #home { 
     /* padding-top: 44px; */
-    /* height: 100vh; */
+    height: 100vh;
     /* position: relative; */
   }
   .home-nav {
@@ -124,11 +147,11 @@
   }
   .content {
     overflow: hidden;
-    /* position: absolute;
+    position: absolute;
     top: 44px;
     bottom: 49px;
     left: 0;
-    right: 0; */
-    height: 500px;
+    right: 0;
+    /* height: 400px; */
   }
 </style>

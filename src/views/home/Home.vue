@@ -5,16 +5,18 @@
         <slot slot="center">购物车</slot>
       </nav-bar>
     </div>
+    <tab-contorl :titles="['流行','最新','最热']" ref="tabcontorl1" @tabIndex="getIndex" v-show="isTabShow"></tab-contorl>
+
     <scroll class="content"
      ref="scroll" 
      :probe-type="3"
      @scroll="contetnScroll"
      :pull-up-load="true"
      @loadMore="loadMore">
-      <home-swiper :banners="banners"></home-swiper>
+      <home-swiper :banners="banners" @imageLoad="imageLoad"></home-swiper>
       <home-recommend-view :recommends="recommends"></home-recommend-view>
       <feature-view></feature-view>
-      <tab-contorl :titles="['流行','最新','最热']" class="tab-contorl" @tabIndex="getIndex"></tab-contorl>
+      <tab-contorl :titles="['流行','最新','最热']" ref="tabcontorl2" @tabIndex="getIndex"></tab-contorl>
       <goods-list :goods="showGoods"></goods-list>
     </scroll>
     <back-top @click.native="backClick" v-show="isBackShow"></back-top>
@@ -46,7 +48,10 @@
           "sell" : {page: 0,list: []},
         },
         currentType: 'pop',
-        isBackShow: false
+        isBackShow: false,
+        tabControlOffsetTop:0,
+        isTabShow: false,
+        saveY:0
       }
     },
     created() {
@@ -57,6 +62,27 @@
       this.getHomeGoods("new")
       this.getHomeGoods("sell")
     },
+    activated() {
+     this.$refs.scroll.scrollTo(0,this.saveY,0)
+     this.$refs.scroll.refresh()
+    },
+    deactivated() {
+      this.saveY = this.$refs.scroll.getScrollY()
+      
+    },
+    mounted() {
+      //监听图片加载完
+      
+      const refresh = this.debounce(this.$refs.scroll.refresh,500)
+      this.$bus.$on('itemImageLoad', () => {
+        // console.log("=====")
+        // this.$refs.scroll.refresh()
+        refresh()
+
+        //监听tabcontrolbar 
+     
+      })
+    },
     components: {
       NavBar,
       HomeSwiper,
@@ -66,7 +92,6 @@
       GoodsList,
       Scroll,
       BackTop,
-      
     },
     computed:{
       showGoods() {
@@ -74,6 +99,20 @@
       }
     },
     methods: {
+      imageLoad() {
+        this.tabControlOffsetTop = this.$refs.tabcontorl2.$el.offsetTop
+
+      },
+      //防抖函数
+      debounce(func,delay) {
+        let timer = null
+        return function(...args) {
+          if(timer) clearTimeout(timer)
+          timer = setTimeout(() => {
+            func.apply(this,args)
+          },delay)
+         }
+      },
       //事件监听
       getIndex(index) {
         //console.log(index)
@@ -88,18 +127,21 @@
           this.currentType = 'sell'
           break
         }
+        this.$refs.tabcontorl1.currentIndex = index
+        this.$refs.tabcontorl2.currentIndex = index
       },
       backClick() {
         this.$refs.scroll.scrollTo(0,0)
       },
       contetnScroll(position) {
         this.isBackShow = (-position.y) > 1000
+        this.isTabShow = (-position.y) > this.tabControlOffsetTop
       },
       loadMore() {
         this.getHomeGoods(this.currentType)
         //console.log("加载了")
        
-        this.$refs.scroll.scroll.refresh()
+        //this.$refs.scroll.scroll.refresh()
       },
       /*
       *网络请求相关
@@ -118,7 +160,7 @@
         this.Goods[type].list.push(...res.data.list) 
         this.Goods[type].page += 1
 
-        this.$refs.scroll.finishPullUp()
+       this.$refs.scroll.finishPullUp()
        })
      }
     }
@@ -133,12 +175,6 @@
   }
   .home-nav {
     background-color: var(--color-tint);
-
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    z-index: 9;
   }
   .tab-contorl {
     position: sticky;

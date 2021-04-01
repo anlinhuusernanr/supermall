@@ -1,18 +1,14 @@
 <template>
-  <div id="home" >
+  <div id="home">
     <div class="home-nav">
       <nav-bar>
-        <slot slot="center">购物车</slot>
+        <slot slot="center">购物车de guangli </slot>
       </nav-bar>
     </div>
     <tab-contorl :titles="['流行','最新','最热']" ref="tabcontorl1" @tabIndex="getIndex" v-show="isTabShow"></tab-contorl>
 
-    <scroll class="content"
-     ref="scroll" 
-     :probe-type="3"
-     @scroll="contetnScroll"
-     :pull-up-load="true"
-     @loadMore="loadMore">
+    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contetnScroll" :pull-up-load="true"
+      @loadMore="loadMore">
       <home-swiper :banners="banners" @imageLoad="imageLoad"></home-swiper>
       <home-recommend-view :recommends="recommends"></home-recommend-view>
       <feature-view></feature-view>
@@ -34,24 +30,24 @@
 
   import TabContorl from "components/content/tabControl/TabContorl"
 
-  import { getHomeMultidata,getHomeGoods } from "network/home"
- 
+  import { getHomeMultidata, getHomeGoods } from "network/home"
+
   export default {
     name: "Home",
-    data(){
+    data() {
       return {
         banners: [],
         recommends: [],
         Goods: {
-          "pop" : {page: 0,list: []},
-          "new" : {page: 0,list: []},
-          "sell" : {page: 0,list: []},
+          "pop": { page: 0, list: [] },
+          "new": { page: 0, list: [] },
+          "sell": { page: 0, list: [] },
         },
         currentType: 'pop',
         isBackShow: false,
-        tabControlOffsetTop:0,
+        tabControlOffsetTop: 0,
         isTabShow: false,
-        saveY:0
+        saveY: 0
       }
     },
     created() {
@@ -63,24 +59,24 @@
       this.getHomeGoods("sell")
     },
     activated() {
-     this.$refs.scroll.scrollTo(0,this.saveY,0)
-     this.$refs.scroll.refresh()
+      this.$refs.scroll.scrollTo(0, this.saveY, 0)
+      this.$refs.scroll.refresh()
     },
     deactivated() {
       this.saveY = this.$refs.scroll.getScrollY()
-      
+
     },
     mounted() {
       //监听图片加载完
-      
-      const refresh = this.debounce(this.$refs.scroll.refresh,500)
+
+      const refresh = this.debounce(this.$refs.scroll.refresh, 500)
       this.$bus.$on('itemImageLoad', () => {
         // console.log("=====")
         // this.$refs.scroll.refresh()
         refresh()
 
         //监听tabcontrolbar 
-     
+
       })
     },
     components: {
@@ -93,7 +89,7 @@
       Scroll,
       BackTop,
     },
-    computed:{
+    computed: {
       showGoods() {
         return this.Goods[this.currentType].list
       }
@@ -104,34 +100,34 @@
 
       },
       //防抖函数
-      debounce(func,delay) {
+      debounce(func, delay) {
         let timer = null
-        return function(...args) {
-          if(timer) clearTimeout(timer)
+        return function (...args) {
+          if (timer) clearTimeout(timer)
           timer = setTimeout(() => {
-            func.apply(this,args)
-          },delay)
-         }
+            func.apply(this, args)
+          }, delay)
+        }
       },
       //事件监听
       getIndex(index) {
         //console.log(index)
         switch (index) {
           case 0:
-          this.currentType = 'pop'
-          break;
+            this.currentType = 'pop'
+            break;
           case 1:
-          this.currentType = 'new'
-          break
+            this.currentType = 'new'
+            break
           case 2:
-          this.currentType = 'sell'
-          break
+            this.currentType = 'sell'
+            break
         }
         this.$refs.tabcontorl1.currentIndex = index
         this.$refs.tabcontorl2.currentIndex = index
       },
       backClick() {
-        this.$refs.scroll.scrollTo(0,0)
+        this.$refs.scroll.scrollTo(0, 0)
       },
       contetnScroll(position) {
         this.isBackShow = (-position.y) > 1000
@@ -140,47 +136,50 @@
       loadMore() {
         this.getHomeGoods(this.currentType)
         //console.log("加载了")
-       
+
         //this.$refs.scroll.scroll.refresh()
       },
       /*
       *网络请求相关
       */
-     getHomeMultidata() {
-      getHomeMultidata().then(res => {
-        this.banners = res.data.banner.list
-        this.recommends = res.data.recommend.list
-      })
-     },
-     getHomeGoods(type) {
-       const page = this.Goods[type].page + 1
-       getHomeGoods(type,page).then(res => {   
-        // console.log(res)
-        //this.Goods[type].page = res.data.page
-        this.Goods[type].list.push(...res.data.list) 
-        this.Goods[type].page += 1
+      getHomeMultidata() {
+        getHomeMultidata().then(res => {
+          this.banners = res.data.banner.list
+          this.recommends = res.data.recommend.list
+        })
+      },
+      getHomeGoods(type) {
+        const page = this.Goods[type].page + 1
+        getHomeGoods(type, page).then(res => {
+          // console.log(res)
+          //this.Goods[type].page = res.data.page
+          this.Goods[type].list.push(...res.data.list)
+          this.Goods[type].page += 1
 
-       this.$refs.scroll.finishPullUp()
-       })
-     }
+          this.$refs.scroll.finishPullUp()
+        })
+      }
     }
   }
 </script>
 
 <style scoped>
-  #home { 
+  #home {
     /* padding-top: 44px; */
     height: 100vh;
     /* position: relative; */
   }
+
   .home-nav {
     background-color: var(--color-tint);
   }
+
   .tab-contorl {
     position: sticky;
-    top:44px;
+    top: 44px;
     z-index: 9;
   }
+
   .content {
     overflow: hidden;
     position: absolute;
